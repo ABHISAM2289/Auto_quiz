@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>📚 Auto Quiz Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: #333;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin: auto;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        h1 {
+            text-align: center;
+            color: #4b0082;
+            margin-bottom: 30px;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f9f9ff;
+        }
+        legend {
+            font-weight: bold;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        button {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Auto Quiz Generator</h1>
+
+        <form method="POST">
+            <button type="submit">Generate Quiz from Summary</button>
+        </form>
+
+        {% if quiz %}
+        <form method="POST" action="/submit">
+            {% for q in quiz %}
+                {% set q_index = loop.index0 %}
+                <fieldset>
+                    <legend>Q{{ q_index + 1 }}: {{ q.question }}</legend>
+                    {% for option in q.options %}
+                        <label>
+                            <input type="radio" name="q{{ q_index }}" value="{{ option }}" required>
+                            {{ option }}
+                        </label>
+                    {% endfor %}
+                </fieldset>
+            {% endfor %}
+            <button type="submit">🚀 Submit Answers</button>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Transcribe Audio</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f8ffae 0%, #43cea2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .main-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(67,206,162,0.18);
+      max-width: 500px;
+      width: 95vw;
+      margin: 40px 0;
+      padding: 36px 28px 32px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #43cea2;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1.5px solid #43cea2;
+      background: #f8ffae;
+      transition: border 0.2s;
+    }
+    input[type="file"]:focus {
+      border: 1.5px solid #43cea2;
+      outline: none;
+    }
+    button {
+      background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 0 6px 10px 6px;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(67,206,162,0.08);
+    }
+    button:disabled {
+      background: #b2dfdb;
+      color: #fff;
+      cursor: not-allowed;
+    }
+    button:hover:enabled {
+      background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
+      transform: translateY(-2px) scale(1.03);
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #185a9d;
+      text-align: center;
+    }
+    #transcript {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f7fafd;
+      border: 1.5px solid #43cea2;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      height: 150px;
+      width:350px;
+      overflow-y: auto;
+      color: #333;
+      font-size: 1.05rem;
+      box-shadow: 0 1px 6px rgba(67,206,162,0.07);
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #999;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    @media (max-width: 600px) {
+      .main-card {
+        padding: 18px 4vw;
+      }
+      #transcript {
+        height: 120px;
+        font-size: 0.98rem;
+      }
+      .nav-buttons {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-card">
+    <h1>🎧 Transcribe Audio</h1>
+
+    <!-- Upload form only -->
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="file" accept="audio/*" required />
+      <button type="submit">Upload & Transcribe</button>
+    </form>
+
+    <div id="status">Status: Idle</div>
+    <div id="transcript"></div>
+
+    <!-- New Buttons for Summarizer and Quiz -->
+    <div class="nav-buttons">
+      <button onclick="window.location.href='http://127.0.0.1:5002/'">🔍 Summarize</button>
+      <button onclick="window.location.href='http://127.0.0.1:5003/'">📝 Generate Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const statusDiv = document.getElementById("status");
+    const transcriptDiv = document.getElementById("transcript");
+
+    // Handle file upload form
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      statusDiv.innerHTML = 'Uploading... <span class="spinner"></span>';
+      transcriptDiv.innerText = "";
+
+      const formData = new FormData(form);
+      try {
+        const response = await fetch("/transcribe", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        handleJobStatus(data);
+      } catch (error) {
+        statusDiv.innerText = "❌ Upload failed.";
+      }
+    };
+
+    // Poll backend for transcription status
+    async function handleJobStatus(data) {
+      if (!data.job_id) {
+        statusDiv.innerText = "❌ Error: " + (data.error || "Unknown");
+        return;
+      }
+
+      const jobId = data.job_id;
+      statusDiv.innerHTML = `⏳ Transcribing... <span class="spinner"></span>`;
+
+      const poll = setInterval(async () => {
+        const res = await fetch(`/status/${jobId}`);
+        const result = await res.json();
+
+        if (result.status === "done") {
+          clearInterval(poll);
+          statusDiv.innerText = "✅ Transcription complete!";
+          transcriptDiv.innerText = result.transcript;
+        } else if (result.status === "error") {
+          clearInterval(poll);
+          statusDiv.innerText = "❌ Error: " + result.error;
+        }
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

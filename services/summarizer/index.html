@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auto Summary</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 50%, #fdcbf1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-card {
+            background: rgba(255,255,255,0.97);
+            border-radius: 22px;
+            box-shadow: 0 8px 32px rgba(106,17,203,0.13), 0 1.5px 8px rgba(252,182,159,0.08);
+            max-width: 650px;
+            width: 96vw;
+            margin: 40px 0;
+            padding: 40px 36px 36px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #6a11cb;
+            margin-bottom: 20px;
+            letter-spacing: 1.5px;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-shadow: 1px 2px 8px #e0e0ff;
+        }
+        form {
+            margin: 18px 0 28px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            border-radius: 10px;
+            border: 1.5px solid #bdbdbd;
+            padding: 12px;
+            font-size: 1rem;
+            margin-bottom: 18px;
+            resize: vertical;
+            background: #f7fafd;
+            transition: border 0.2s;
+        }
+        textarea:focus {
+            border: 1.5px solid #6a11cb;
+            outline: none;
+        }
+        button {
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            background: linear-gradient(90deg, #fc5c7d 0%, #fdcbf1 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px rgba(106,17,203,0.08);
+            margin: 8px auto;
+            display: block;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #fdcbf1 0%, #fc5c7d 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        .summary-container {
+            width: 100%;
+            background: linear-gradient(90deg, #f7fafd 60%, #e0c3fc 100%);
+            padding: 26px 22px;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+            text-align: left;
+            white-space: pre-wrap;
+            margin-top: 16px;
+            border: 1.5px solid #e0e0e0;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 700px) {
+            .main-card {
+                padding: 18px 4vw;
+            }
+            .summary-container {
+                padding: 14px 6px;
+            }
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-card">
+        <h1>📝 Summary</h1>
+
+        <!-- Input Textarea -->
+        <form method="POST">
+            <textarea name="text" placeholder="Paste or type your content here..." required></textarea>
+            <button type="submit">Get Summary</button>
+        </form>
+
+        <!-- Summary Display -->
+        <div class="summary-container">
+            <h2>Summary:</h2>
+            <p id="summary-text">Your summarized content will appear here...</p>
+        </div>
+
+        <!-- Centered Download Button -->
+        <div class="button-row">
+            <button onclick="downloadSummary()">⬇️ Download Summary</button>
+        </div>
+
+        <!-- Quiz Redirection Button -->
+        <div class="button-row">
+            <button onclick="window.location.href='http://127.0.0.1:5003/'">🧠 Generate Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        function downloadSummary() {
+            const text = document.getElementById("summary-text").innerText;
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "summary.txt";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

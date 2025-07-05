@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #eef1f7;
+            padding: 40px;
+        }
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+        .incorrect {
+            color: red;
+            font-weight: bold;
+        }
+        .question {
+            margin-top: 20px;
+        }
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Your Score: {{ score }}/{{ total }}</h1>
+        <hr>
+        {% for item in analysis %}
+            <div class="question">
+                <h3>Q{{ loop.index }}: {{ item.question }}</h3>
+                <p>Your Answer: <span class="{{ 'correct' if item.is_correct else 'incorrect' }}">{{ item.selected }}</span></p>
+                <p>Correct Answer: <strong>{{ item.correct }}</strong></p>
+                <p><i>Explanation:</i> {{ item.explanation }}</p>
+            </div>
+            <hr>
+        {% endfor %}
+    </div>
+</body>
+</html>

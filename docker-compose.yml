@@ -1,0 +1,15 @@
+services:
+  speech_to_text:
+    build: ./services/speech_to_text
+    ports:
+      - "5001:5001"
+
+  summarizer:
+    build: ./services/summarizer
+    ports:
+      - "5002:5002"
+
+  quiz_engine:
+    build: ./services/quiz_engine
+    ports:
+     - "5003:5003"
