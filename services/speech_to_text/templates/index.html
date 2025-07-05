@@ -61,7 +61,7 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      margin: 0 6px 10px 6px;
+      margin: 6px;
       transition: background 0.2s, transform 0.1s;
       box-shadow: 0 2px 8px rgba(67,206,162,0.08);
     }
@@ -88,7 +88,7 @@
       border-radius: 10px;
       white-space: pre-wrap;
       height: 150px;
-      width:350px;
+      width: 350px;
       overflow-y: auto;
       color: #333;
       font-size: 1.05rem;
@@ -132,16 +132,17 @@
   <div class="main-card">
     <h1>🎧 Transcribe Audio</h1>
 
-    <!-- Upload form only -->
     <form id="uploadForm" enctype="multipart/form-data">
-      <input type="file" name="file" accept="audio/*" required />
+      <input type="file" name="file" accept="audio/*" />
+      <button type="button" id="micBtn">🎤 Start Recording</button>
+      <audio id="recordedAudio" controls style="margin-top: 1rem; display:none;"></audio>
+      <input type="hidden" id="micMode" name="micMode" value="false" />
       <button type="submit">Upload & Transcribe</button>
     </form>
 
     <div id="status">Status: Idle</div>
     <div id="transcript"></div>
 
-    <!-- New Buttons for Summarizer and Quiz -->
     <div class="nav-buttons">
       <button onclick="window.location.href='http://127.0.0.1:5002/'">🔍 Summarize</button>
       <button onclick="window.location.href='http://127.0.0.1:5003/'">📝 Generate Quiz</button>
@@ -150,21 +151,75 @@
 
   <script>
     const form = document.getElementById("uploadForm");
+    const micBtn = document.getElementById("micBtn");
+    const audioPreview = document.getElementById("recordedAudio");
+    const micModeInput = document.getElementById("micMode");
     const statusDiv = document.getElementById("status");
     const transcriptDiv = document.getElementById("transcript");
 
-    // Handle file upload form
+    let mediaRecorder, recordedBlob = null, chunks = [], isRecording = false;
+
+    micBtn.onclick = async () => {
+      if (!isRecording) {
+        micBtn.innerText = "⏹ Stop Recording";
+        micModeInput.value = "true";
+        recordedBlob = null;
+        chunks = [];
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          isRecording = true;
+
+          mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(chunks, { type: "audio/webm" });
+            audioPreview.src = URL.createObjectURL(recordedBlob);
+            audioPreview.style.display = "block";
+          };
+        } catch (err) {
+          statusDiv.innerText = "❌ Microphone access denied.";
+          micBtn.innerText = "🎤 Start Recording";
+          isRecording = false;
+        }
+      } else {
+        mediaRecorder.stop();
+        micBtn.innerText = "🎤 Start Recording";
+        isRecording = false;
+      }
+    };
+
     form.onsubmit = async (e) => {
       e.preventDefault();
       statusDiv.innerHTML = 'Uploading... <span class="spinner"></span>';
       transcriptDiv.innerText = "";
 
-      const formData = new FormData(form);
+      const formData = new FormData();
+
+      if (micModeInput.value === "true" && recordedBlob) {
+        const micFile = new File([recordedBlob], "recorded.webm", { type: "audio/webm" });
+        formData.append("file", micFile);
+      } else {
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput.files.length) {
+          statusDiv.innerText = "❌ Please select or record a file.";
+          return;
+        }
+        formData.append("file", fileInput.files[0]);
+      }
+
       try {
         const response = await fetch("/transcribe", {
           method: "POST",
           body: formData
         });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          statusDiv.innerText = `❌ Server error: ${errText}`;
+          return;
+        }
 
         const data = await response.json();
         handleJobStatus(data);
@@ -173,7 +228,6 @@
       }
     };
 
-    // Poll backend for transcription status
     async function handleJobStatus(data) {
       if (!data.job_id) {
         statusDiv.innerText = "❌ Error: " + (data.error || "Unknown");
@@ -191,6 +245,7 @@
           clearInterval(poll);
           statusDiv.innerText = "✅ Transcription complete!";
           transcriptDiv.innerText = result.transcript;
+          transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
         } else if (result.status === "error") {
           clearInterval(poll);
           statusDiv.innerText = "❌ Error: " + result.error;
